@@ -7,6 +7,9 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.github.jiho.bot.util.ValTierEmoteUtil;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -15,17 +18,33 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class ValCommand extends ListenerAdapter {
-    private static final Map < String, String > tierMap = new HashMap();
 
+    private static final String UNKNOWN_TIER_MESSAGE = "랭크 정보가 없습니다.";
+    private static final Map<String, String> tierMap = new HashMap<>();
+
+    static {
+        tierMap.put("Iron", "아이언");
+        tierMap.put("Bronze", "브론즈");
+        tierMap.put("Silver", "실버");
+        tierMap.put("Gold", "골드");
+        tierMap.put("Platinum", "플래티넘");
+        tierMap.put("Diamond", "다이아몬드");
+        tierMap.put("Ascendant", "초월자");
+        tierMap.put("Immortal", "불멸자");
+        tierMap.put("Radiant", "래디언트");
+    }
+
+    @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         User user = event.getAuthor();
         if (!user.isBot()) {
             if (event.isFromType(ChannelType.TEXT)) {
                 TextChannel tc = event.getChannel().asTextChannel();
                 Message message = event.getMessage();
+
                 if (message.getContentRaw().startsWith("!val")) {
                     String[] args = message.getContentRaw().substring(1).split(" ");
-                    if (args.length > 2 || args.length == 2 && !args[1].contains("#")) {
+                    if (args.length > 2 || (args.length == 2 && !args[1].contains("#"))) {
                         return;
                     }
 
@@ -43,10 +62,15 @@ public class ValCommand extends ListenerAdapter {
                     }
 
                     String tierInfo = this.getValorantTierAndRank(region, username, tag);
-                    message.reply(tierInfo).queue();
+                    EmbedBuilder eb = new EmbedBuilder();
+
+                    eb.setAuthor(username + "#" + tag + "의 발로란트 랭크 정보");
+                    eb.setTitle("Valorant");
+                    eb.setDescription(tierInfo);
+                    eb.setFooter("Valorant API를 통해 제공된 데이터");
+                    message.replyEmbeds(eb.build()).queue();
                 }
             }
-
         }
     }
 
@@ -56,32 +80,27 @@ public class ValCommand extends ListenerAdapter {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-            HttpResponse < String > response = client.send(request, BodyHandlers.ofString());
+            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                String rankInfo = ((String) response.body()).trim();
-                String[] parts = rankInfo.split(" ", 2);
-                String tier = parts[0];
-                String restOfInfo = parts.length > 1 ? parts[1] : "";
-                String translatedTier = (String) tierMap.getOrDefault(tier, tier);
-                return translatedTier + " " + restOfInfo;
+                String rankInfo = response.body().trim();
+                String translatedTier = translateTierToKorean(rankInfo);
+                String emoji = ValTierEmoteUtil.getTierEmote(rankInfo);
+                return emoji + " " + translatedTier;
             } else {
-                return "Failed to fetch data for player " + username + "#" + tag;
+                return ValTierEmoteUtil.getTierEmote("") + " " + UNKNOWN_TIER_MESSAGE;
             }
         } catch (Exception var13) {
             var13.printStackTrace();
-            return "Error occurred while fetching data for player " + username + "#" + tag;
+            return ValTierEmoteUtil.getTierEmote("") + " " + "플레이어 정보를 가져오는 중 오류가 발생했습니다: " + username + "#" + tag;
         }
     }
 
-    static {
-        tierMap.put("Iron", "아이언");
-        tierMap.put("Bronze", "브론즈");
-        tierMap.put("Silver", "실버");
-        tierMap.put("Gold", "골드");
-        tierMap.put("Platinum", "플래티넘");
-        tierMap.put("Diamond", "다이아몬드");
-        tierMap.put("Ascendant", "초월자");
-        tierMap.put("Immortal", "불멸자");
-        tierMap.put("Radiant", "래디언트");
+    private String translateTierToKorean(String tierInfo) {
+        for (Map.Entry<String, String> entry : tierMap.entrySet()) {
+            if (tierInfo.contains(entry.getKey())) {
+                return tierInfo.replace(entry.getKey(), entry.getValue());
+            }
+        }
+        return tierInfo;
     }
 }
