@@ -12,6 +12,7 @@ import static org.github.jiho.bot.Constants.BOT_TOKEN;
                     .setActivity(Activity.playing("박지호 감시"))
                     .addEventListeners(new Object[]{new ChatResponse()})
                     .addEventListeners(new Object[]{new LolCommand()})
+                    .addEventListeners(new Object[]{new TFTCommand()})
                     .build();
         }
     }
