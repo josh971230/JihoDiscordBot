@@ -64,6 +64,13 @@ public class ValCommand extends ListenerAdapter {
                     String tierInfo = this.getValorantTierAndRank(region, username, tag);
                     EmbedBuilder eb = new EmbedBuilder();
 
+                    // RR 값이 양수인지 음수인지에 따라 색상 변경
+                    if (tierInfo.contains("[-")) {
+                        eb.setColor(0xE84057); // 빨간색 (음수)
+                    }  else {
+                        eb.setColor(0x5383E8); // 기본 색상 (흰색)
+                    }
+
                     eb.setAuthor(username + "#" + tag + "의 발로란트 랭크 정보");
                     eb.setTitle("Valorant");
                     eb.setDescription(tierInfo);
@@ -83,9 +90,9 @@ public class ValCommand extends ListenerAdapter {
             HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 String rankInfo = response.body().trim();
-                String translatedTier = translateTierToKorean(rankInfo);
                 String emoji = ValTierEmoteUtil.getTierEmote(rankInfo);
-                return emoji + " " + translatedTier;
+                String translatedRankInfo = translateRankInfo(rankInfo);
+                return emoji + " " + translatedRankInfo;
             } else {
                 return ValTierEmoteUtil.getTierEmote("") + " " + UNKNOWN_TIER_MESSAGE;
             }
@@ -95,12 +102,12 @@ public class ValCommand extends ListenerAdapter {
         }
     }
 
-    private String translateTierToKorean(String tierInfo) {
+    private String translateRankInfo(String rankInfo) {
         for (Map.Entry<String, String> entry : tierMap.entrySet()) {
-            if (tierInfo.contains(entry.getKey())) {
-                return tierInfo.replace(entry.getKey(), entry.getValue());
+            if (rankInfo.contains(entry.getKey())) {
+                return rankInfo.replace(entry.getKey(), entry.getValue());
             }
         }
-        return tierInfo;
+        return rankInfo;
     }
 }

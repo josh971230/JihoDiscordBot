@@ -15,35 +15,21 @@ public class PuuIdUtil {
     private static final String TFT_API_KEY = Constants.TFT_KEY;
 
     public static String getPuuid(String username, String tag) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-
-        String encodedGameName = URLEncoder.encode(username, StandardCharsets.UTF_8);
-        String encodedTagLine = URLEncoder.encode(tag, StandardCharsets.UTF_8);
-
-        String puuidUrl = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s?api_key=%s",
-                encodedGameName, encodedTagLine, RIOT_API_KEY);
-
-        HttpRequest puuidRequest = HttpRequest.newBuilder()
-                .uri(URI.create(puuidUrl))
-                .build();
-        HttpResponse<String> puuidResponse = client.send(puuidRequest, HttpResponse.BodyHandlers.ofString());
-
-        if (puuidResponse.statusCode() != 200) {
-            throw new Exception("Failed to fetch PUUID for " + username + "#" + tag);
-        }
-
-        JsonObject puuidJson = JsonParser.parseString(puuidResponse.body()).getAsJsonObject();
-        return puuidJson.get("puuid").getAsString();
+        return fetchPuuid(username, tag, RIOT_API_KEY);
     }
 
     public static String getTftPuuid(String username, String tag) throws Exception {
+        return fetchPuuid(username, tag, TFT_API_KEY);
+    }
+
+    private static String fetchPuuid(String username, String tag, String apiKey) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
 
         String encodedGameName = URLEncoder.encode(username, StandardCharsets.UTF_8);
         String encodedTagLine = URLEncoder.encode(tag, StandardCharsets.UTF_8);
 
         String puuidUrl = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s?api_key=%s",
-                encodedGameName, encodedTagLine, TFT_API_KEY);
+                encodedGameName, encodedTagLine, apiKey);
 
         HttpRequest puuidRequest = HttpRequest.newBuilder()
                 .uri(URI.create(puuidUrl))
@@ -51,7 +37,10 @@ public class PuuIdUtil {
         HttpResponse<String> puuidResponse = client.send(puuidRequest, HttpResponse.BodyHandlers.ofString());
 
         if (puuidResponse.statusCode() != 200) {
-            throw new Exception("Failed to fetch PUUID for " + username + "#" + tag);
+            String errorMsg = String.format("Failed to fetch PUUID for %s#%s. Status code: %d. Response: %s",
+                    username, tag, puuidResponse.statusCode(), puuidResponse.body());
+            System.err.println(errorMsg);
+            throw new Exception(errorMsg);
         }
 
         JsonObject puuidJson = JsonParser.parseString(puuidResponse.body()).getAsJsonObject();
