@@ -11,15 +11,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.github.jiho.bot.util.PuuIdUtil;
 
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,7 +80,7 @@ public class LolCommand extends ListenerAdapter {
                     }
 
                     // PUUID 가져오기
-                    String puuid = getPuuid(username, tag);
+                    String puuid = PuuIdUtil.getPuuid(username, tag);
 
                     String summonerId = getSummonerIdByPuuid(puuid);
 
@@ -150,29 +148,29 @@ public class LolCommand extends ListenerAdapter {
         }
     }
 
-    public String getPuuid(String gameName, String tagLine) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-
-        // 한글과 특수 문자 인코딩
-        String encodedGameName = URLEncoder.encode(gameName, StandardCharsets.UTF_8);
-        String encodedTagLine = URLEncoder.encode(tagLine, StandardCharsets.UTF_8);
-
-        // 1. PUUID 가져오기
-        String puuidUrl = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s?api_key=%s",
-                encodedGameName, encodedTagLine, RIOT_API_KEY);
-
-        HttpRequest puuidRequest = HttpRequest.newBuilder()
-                .uri(URI.create(puuidUrl))
-                .build();
-        HttpResponse<String> puuidResponse = client.send(puuidRequest, HttpResponse.BodyHandlers.ofString());
-
-        if (puuidResponse.statusCode() != 200) {
-            throw new Exception("Failed to fetch PUUID for " + gameName + "#" + tagLine);
-        }
-
-        JsonObject puuidJson = JsonParser.parseString(puuidResponse.body()).getAsJsonObject();
-        return puuidJson.get("puuid").getAsString();
-    }
+//    public String getPuuid(String gameName, String tagLine) throws Exception {
+//        HttpClient client = HttpClient.newHttpClient();
+//
+//        // 한글과 특수 문자 인코딩
+//        String encodedGameName = URLEncoder.encode(gameName, StandardCharsets.UTF_8);
+//        String encodedTagLine = URLEncoder.encode(tagLine, StandardCharsets.UTF_8);
+//
+//        // 1. PUUID 가져오기
+//        String puuidUrl = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s?api_key=%s",
+//                encodedGameName, encodedTagLine, RIOT_API_KEY);
+//
+//        HttpRequest puuidRequest = HttpRequest.newBuilder()
+//                .uri(URI.create(puuidUrl))
+//                .build();
+//        HttpResponse<String> puuidResponse = client.send(puuidRequest, HttpResponse.BodyHandlers.ofString());
+//
+//        if (puuidResponse.statusCode() != 200) {
+//            throw new Exception("Failed to fetch PUUID for " + gameName + "#" + tagLine);
+//        }
+//
+//        JsonObject puuidJson = JsonParser.parseString(puuidResponse.body()).getAsJsonObject();
+//        return puuidJson.get("puuid").getAsString();
+//    }
 
     public String getSummonerIdByPuuid(String puuid) throws Exception {
         HttpClient client = HttpClient.newHttpClient();

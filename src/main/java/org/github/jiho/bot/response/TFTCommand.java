@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.github.jiho.bot.util.PuuIdUtil;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -82,7 +83,7 @@ public class TFTCommand extends ListenerAdapter {
                     }
 
                     // PUUID 가져오기
-                    String puuid = getPuuid(username, tag);
+                    String puuid = PuuIdUtil.getTftPuuid(username, tag);
 
                     // Summoner ID 가져오기
                     String summonerId = getTftSummonerIdByPuuid(puuid);
@@ -141,27 +142,6 @@ public class TFTCommand extends ListenerAdapter {
         }
     }
 
-    private String getPuuid(String username, String tag) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-
-        String encodedGameName = URLEncoder.encode(username, StandardCharsets.UTF_8);
-        String encodedTagLine = URLEncoder.encode(tag, StandardCharsets.UTF_8);
-
-        String puuidUrl = String.format("https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/%s/%s?api_key=%s",
-                encodedGameName, encodedTagLine, RIOT_API_KEY);
-
-        HttpRequest puuidRequest = HttpRequest.newBuilder()
-                .uri(URI.create(puuidUrl))
-                .build();
-        HttpResponse<String> puuidResponse = client.send(puuidRequest, HttpResponse.BodyHandlers.ofString());
-
-        if (puuidResponse.statusCode() != 200) {
-            throw new Exception("Failed to fetch PUUID for " + username + "#" + tag);
-        }
-
-        JsonObject puuidJson = JsonParser.parseString(puuidResponse.body()).getAsJsonObject();
-        return puuidJson.get("puuid").getAsString();
-    }
 
     private String getTftSummonerIdByPuuid(String puuid) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
@@ -252,7 +232,7 @@ public class TFTCommand extends ListenerAdapter {
             return "최근 기록이 없습니다.";
         }
 
-        StringBuilder placements = new StringBuilder("최근 경기를 바탕으로 한 등수: ");
+        StringBuilder placements = new StringBuilder("최근 경기 등수: ");
         int placementSum = 0;
         int validMatches = 0;
 

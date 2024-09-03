@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-public class ChatResponse extends ListenerAdapter {
+public class ValCommand extends ListenerAdapter {
     private static final Map < String, String > tierMap = new HashMap();
 
     public void onMessageReceived(MessageReceivedEvent event) {
