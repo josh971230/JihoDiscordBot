@@ -169,16 +169,26 @@ public class LolRankNotifier {
 
         JsonObject participantInfo = null;
         int participantDamage = 0;
+        int participantTeamId = 0;
         List<Integer> damageList = new ArrayList<>();
 
+        // 참가자의 팀 ID를 먼저 확인
         for (JsonElement participantElement : participants) {
             JsonObject participant = participantElement.getAsJsonObject();
-            int damage = participant.get("totalDamageDealtToChampions").getAsInt();
-            damageList.add(damage);
-
             if (participant.get("puuid").getAsString().equals(puuid)) {
+                participantTeamId = participant.get("teamId").getAsInt();
                 participantInfo = participant;
-                participantDamage = damage;
+                participantDamage = participant.get("totalDamageDealtToChampions").getAsInt();
+                break;
+            }
+        }
+
+        // 같은 팀의 참가자들 간의 딜량을 비교
+        for (JsonElement participantElement : participants) {
+            JsonObject participant = participantElement.getAsJsonObject();
+            if (participant.get("teamId").getAsInt() == participantTeamId) {
+                int damage = participant.get("totalDamageDealtToChampions").getAsInt();
+                damageList.add(damage);
             }
         }
 
@@ -205,8 +215,9 @@ public class LolRankNotifier {
             int damageRank = matchInfo.get("damageRank").getAsInt();
 
             EmbedBuilder eb = new EmbedBuilder();
-            eb.setTitle("리그 오브 레전드 랭크 업데이트");
-            eb.setDescription(String.format("%s %s - %d LP\n전적: %s  K/D/A: %s  딜량 순위: %d등",
+            eb.setAuthor( username + "1의 최신전적");
+            eb.setTitle("League of Legends");
+            eb.setDescription(String.format("%s %s - %d LP\n전적: %s  K/D/A: %s  팀 내 딜량 순위: %d등",
                     tier, rank, currentLp, winStatus, kda, damageRank));
 
             if (currentLp > previousLp) {
