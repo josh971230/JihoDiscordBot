@@ -52,7 +52,7 @@ public class JihoDiscordBot {
 
             // RiotFriendNotifier 실행
             String friendNotifierChannelId = "325688449652883458"; // 친구 알림을 보낼 채널 ID
-            RiotFriendNotifier jihonotifier = new RiotFriendNotifier(jda, friendNotifierChannelId);
+            RiotFriendNotifier jihonotifier = new RiotFriendNotifier(jda, friendNotifierChannelId );
             jihonotifier.start(); // RiotFriendNotifier 시작
 
         } catch (Exception e) {
