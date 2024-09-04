@@ -1,9 +1,9 @@
 package org.github.jiho.bot.response;
 
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,6 +12,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Base64;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.EmbedBuilder;
 
 public class RiotFriendNotifier {
 
@@ -59,7 +62,7 @@ public class RiotFriendNotifier {
     private void checkFriendStatus(LockfileInfo lockfileInfo) throws Exception {
         System.out.println("Checking friend status...");
 
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = createHttpClientWithNoSSL();
         String auth = Base64.getEncoder().encodeToString(("riot:" + lockfileInfo.password).getBytes());
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -92,6 +95,31 @@ public class RiotFriendNotifier {
         } else {
             System.err.println("Failed to get friend list, response code: " + response.statusCode());
         }
+    }
+
+    private HttpClient createHttpClientWithNoSSL() throws Exception {
+        // SSL 인증을 무시하는 TrustManager 설정
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        // SSLContext를 생성하여 SSL 인증을 무시하도록 설정
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+        return HttpClient.newBuilder()
+                .sslContext(sslContext)
+                .build();
     }
 
     private void sendOnlineNotification() {
